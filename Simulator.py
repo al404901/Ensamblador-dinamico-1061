@@ -9,6 +9,7 @@ class Simulator:
         self.station=Station()
         self.instruction_queue: list[Instruction] = []
         self.cycle_counter=0
+        self.wb_queue=[]
 
     def add_instructions(self, instructions: list[Instruction]):
         for instruction in instructions:
@@ -32,33 +33,40 @@ class Simulator:
             print(f"[{tag}] Se le ha asignado '{instruction}' y ha pasado a ISS")
 
     def wb_stage(self):
-        for unit in self.station.stations:
-            for entry in self.station.stations[unit]:
-                if entry.busy and entry.state=='WB':
-                    temporal_result= 122
-                    for register in self.rbank.float_regs.values():
-                        register.update(temporal_result, entry.tag)
-                    for register in self.rbank.int_regs.values():
-                        register.update(temporal_result, entry.tag)
 
-                    self.station.spread_result(temporal_result, entry.tag)
-                    entry.busy = False
-                    print(f"[{entry.tag}] Ha difundido sus resultados a registros y estaciones con su TAG")
+        #for unit in self.station.stations:
+           # for entry in self.station.stations[unit]:
+                #if entry.busy and entry.state=='WB':
+        if len(self.wb_queue)>0:
+            entry=self.wb_queue.pop(0)
+            entry.state = 'WB'
+            print(f"[{entry.tag}] Ha pasado a WB")
+            temporal_result= 122
+            for register in self.rbank.float_regs.values():
+                    register.update(temporal_result, entry.tag)
+            for register in self.rbank.int_regs.values():
+                    register.update(temporal_result, entry.tag)
+
+            self.station.spread_result(temporal_result, entry.tag)
+            entry.busy = False
+            print(f"[{entry.tag}] Ha difundido sus resultados a registros y estaciones con su TAG")
 
 
     def ex_stage(self):
+        available_step_to_ex=True
         for unit in self.station.stations:
             for entry in self.station.stations[unit]:
                 if entry.busy:
-                    if entry.state == 'ISS':
+                    if available_step_to_ex and entry.state == 'ISS':
                         if entry.qj is None and entry.qk is None:
                             entry.state = 'EX'
                             print(f"[{entry.tag}] Ha pasado a EX")
+                            available_step_to_ex = False
                     elif entry.state == 'EX':
                         entry.latency -= 1
-                        if entry.latency == 0:
-                            entry.state = 'WB'
-                            print(f"[{entry.tag}] Ha pasado a WB")
+                        if entry.latency == 1: #ESTO NO GENERA DUPLICADOS GEMINI PORQUE SOLO MIRA CUANDO LATENCIA = 0
+                            self.wb_queue.append(entry)
+
 
 
 
