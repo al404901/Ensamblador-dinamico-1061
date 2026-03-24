@@ -9,7 +9,6 @@ class Simulator:
         self.station=Station()
         self.instruction_queue: list[Instruction] = []
         self.cycle_counter=0
-        self.wb_queue=[]
 
     def add_instructions(self, instructions: list[Instruction]):
         for instruction in instructions:
@@ -33,41 +32,58 @@ class Simulator:
             print(f"[{tag}] Se le ha asignado '{instruction}' y ha pasado a ISS")
 
     def wb_stage(self):
+        for unit in self.station.stations:
+            for entry in self.station.stations[unit]:
+                if entry.busy and entry.state=='WB':
+                    temporal_result= 122
+                    for register in self.rbank.float_regs.values():
+                        register.update(temporal_result, entry.tag)
+                    for register in self.rbank.int_regs.values():
+                        register.update(temporal_result, entry.tag)
 
-        #for unit in self.station.stations:
-           # for entry in self.station.stations[unit]:
-                #if entry.busy and entry.state=='WB':
-        if len(self.wb_queue)>0:
-            entry=self.wb_queue.pop(0)
-            entry.state = 'WB'
-            print(f"[{entry.tag}] Ha pasado a WB")
-            temporal_result= 122
-            for register in self.rbank.float_regs.values():
-                    register.update(temporal_result, entry.tag)
-            for register in self.rbank.int_regs.values():
-                    register.update(temporal_result, entry.tag)
-
-            self.station.spread_result(temporal_result, entry.tag)
-            entry.busy = False
-            print(f"[{entry.tag}] Ha difundido sus resultados a registros y estaciones con su TAG")
+                    self.station.spread_result(temporal_result, entry.tag)
+                    entry.busy = False
+                    print(f"[{entry.tag}] Ha difundido sus resultados a registros y estaciones con su TAG")
 
 
     def ex_stage(self):
-        available_step_to_ex=True
         for unit in self.station.stations:
             for entry in self.station.stations[unit]:
                 if entry.busy:
-                    if available_step_to_ex and entry.state == 'ISS':
+                    if entry.state == 'ISS':
                         if entry.qj is None and entry.qk is None:
                             entry.state = 'EX'
                             print(f"[{entry.tag}] Ha pasado a EX")
-                            available_step_to_ex = False
                     elif entry.state == 'EX':
                         entry.latency -= 1
-                        if entry.latency == 1: #ESTO NO GENERA DUPLICADOS GEMINI PORQUE SOLO MIRA CUANDO LATENCIA = 0
-                            self.wb_queue.append(entry)
+                        if entry.latency == 0:
+                            entry.state = 'WB'
+                            print(f"[{entry.tag}] Ha pasado a WB")
 
 
+def cargar_instrucciones_desde_fichero(ruta_archivo: str) -> list[Instruction]:
+    instrucciones = []
+    try:
+        with open(ruta_archivo, 'r') as archivo:
+            for linea in archivo:
+                # Quitamos espacios en blanco al principio y final
+                linea_limpia = linea.strip()
+
+                # Ignoramos líneas vacías o que empiezan por comentario (opcional)
+                if not linea_limpia or linea_limpia.startswith('#') or linea_limpia.startswith(';'):
+                    continue
+
+                # Usamos el método que creamos en la clase Instruction
+                nueva_inst = Instruction.from_string(linea_limpia)
+                if nueva_inst:
+                    instrucciones.append(nueva_inst)
+
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo en {ruta_archivo}")
+    except Exception as e:
+        print(f"Error al leer el fichero: {e}")
+
+    return instrucciones
 
 
 
@@ -80,8 +96,14 @@ if __name__ == '__main__':
         #inst3 = Instruction(InstructionType.LD, "r1", "r2", "4")
         #inst4 = Instruction(InstructionType.SD, "r3", "r1", "44")
         #EJERCICIO2
-        instrucciones=[Instruction(InstructionType.LD, "f2", "r2", 0),Instruction(InstructionType.FADD, "f4", "f5", "f6"),Instruction(InstructionType.FMULT, "f5", "f6", "f7")]
+        #instrucciones=[Instruction(InstructionType.LD, "f2", "r2", 0),Instruction(InstructionType.FADD, "f4", "f5", "f6"),Instruction(InstructionType.FMULT, "f5", "f6", "f7")]
+        #prueba
+        ruta = "codigo.txt"
+        instrucciones = cargar_instrucciones_desde_fichero(ruta)
+
+
         simulador.add_instructions(instrucciones)
         for i in range(100):
             simulador.next_cycle()
+
 

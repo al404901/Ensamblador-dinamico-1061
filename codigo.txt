@@ -1,0 +1,3 @@
+ld f2, 0(r2)
+fadd f4, f5, f6
+fmult f5, f6, f7

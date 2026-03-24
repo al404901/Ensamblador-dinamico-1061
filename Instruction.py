@@ -26,3 +26,23 @@ class Instruction:
         else:
             return f"{self.type.name.lower()} {self.dest}, {self.src2}({self.src1})"
 
+    @staticmethod
+    def from_string(line: str):
+        line = line.lower().replace(',', ' ').replace('(', ' ').replace(')', ' ').strip()
+        parts= line.split()
+        if not parts:
+            return None
+        inst_name = parts[0].upper()
+        try:
+            type_enum = InstructionType[inst_name]
+        except KeyError:
+            raise ValueError(f"Instrucción desconocida: {inst_name}")
+        dest = parts[1]
+        if type_enum.value == UnitType.MEM:
+            offset = int(parts[2])
+            base_reg = parts[3]
+            return Instruction(type_enum, dest, base_reg, offset)
+        else:
+            src1 = parts[2]
+            src2 = parts[3]
+            return Instruction(type_enum, dest, src1, src2)
