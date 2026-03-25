@@ -6,11 +6,15 @@ class UnitType(Enum):
     MULT=5
 
 class InstructionType(Enum):
-    FADD=UnitType.ALU
-    FSUB=UnitType.ALU
-    FMULT=UnitType.MULT
-    LD=UnitType.MEM
-    SD=UnitType.MEM
+    FADD=(1, UnitType.ALU)
+    FSUB=(2, UnitType.ALU)
+    FMULT=(3, UnitType.MULT)
+    LD=(4, UnitType.MEM)
+    SD=(5, UnitType.MEM)
+
+    def __init__(self, op_code, unit):
+        self.op_code = op_code
+        self.unit = unit
 
 
 class Instruction:
@@ -21,7 +25,7 @@ class Instruction:
         self.src2 = src2
 
     def __str__(self):
-        if self.type.value!=UnitType.MEM:
+        if self.type.unit!=UnitType.MEM:
             return  f"{self.type.name.lower()} {self.dest}, {self.src1} , {self.src2}"
         else:
             return f"{self.type.name.lower()} {self.dest}, {self.src2}({self.src1})"
@@ -38,7 +42,7 @@ class Instruction:
         except KeyError:
             raise ValueError(f"Instrucción desconocida: {inst_name}")
         dest = parts[1]
-        if type_enum.value == UnitType.MEM:
+        if type_enum.unit == UnitType.MEM:
             offset = int(parts[2])
             base_reg = parts[3]
             return Instruction(type_enum, dest, base_reg, offset)

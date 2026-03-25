@@ -1,3 +1,5 @@
-ld f2, 0(r2)
-fadd f4, f5, f6
-fmult f5, f6, f7
+ld f2, 0(r1)
+fmult f3, f2, f5
+fadd f2, f4, f6
+fadd f2, f2, f3
+sd f2, 0(r1)
