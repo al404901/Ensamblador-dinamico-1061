@@ -1,7 +1,10 @@
+
+
+
 class Register:
-    def __init__(self, name):
+    def __init__(self, name, value):
         self.name=name
-        self.value = 0.0
+        self.value = value
         self.tag= None
         self.busy = False
 
@@ -20,8 +23,8 @@ class RegisterBank:
         for i in range(16):
             int_name='r'+str(i)
             float_name='f'+str(i)
-            new_int_register=Register(int_name)
-            new_float_register =Register(float_name)
+            new_int_register=Register(int_name, i)
+            new_float_register =Register(float_name, float(i))
             self.int_regs[int_name] = new_int_register
             self.float_regs[float_name]=new_float_register
 

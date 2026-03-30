@@ -17,7 +17,7 @@ class Entry:
         self.inm=None
         self.vj_cycle= 0
         self.vk_cycle= 0
-        self.m_address=None
+        self.result=None
         self.ready_cycle=0
 
     def update(self, operation: Instruction):
@@ -32,6 +32,8 @@ class Entry:
         self.inm = None
         self.vj_cycle = 0
         self.vk_cycle = 0
+        self.result=None
+        self.ready_cycle=0
 
 class Station:
     def __init__(self):
